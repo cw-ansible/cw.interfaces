@@ -29,34 +29,75 @@ See specific documentation in `defaults/main.yml`
 ### Simple DHCP on `eth0`
 
     interfaces_network_interfaces:
-     - file: /etc/network/interfaces
-       data:
-       - iface: lo
-       - iface: eth0
+      interfaces_network_interfaces:
+       - file: /etc/network/interfaces
+         data:
+         - iface: lo
+         - iface: eth0
 
 ### Advanced static IP on `eth0`
 
-    - file: /etc/network/interfaces
-      data:
-        - iface: lo
-        - iface: eth0
-          hostname: server.example.com
-          comment: private interface (admin)
-          address: 172.18.0.1
-          netmask: 255.255.128.0
-          gateway: 172.18.127.1
-          dns-nameservers:
-            - 192.168.1.1
-            - 192.168.8.8
-          dns-search: example.com
-          routes:
-            - { network: 172.12.0.0/17, gateway: 172.18.127.254 } 
-            - { network: 192.168.0.0/16, gateway: 172.18.127.254 }
-            - { network: 10.0.0.0/8, gateway: 172.18.127.254 }
+    interfaces_network_interfaces:
+      - file: /etc/network/interfaces
+        data:
+          - iface: lo
+          - iface: eth0
+            hostname: server.example.com
+            comment: private interface (admin)
+            address: 172.18.0.1
+            netmask: 255.255.128.0
+            gateway: 172.18.127.1
+            dns-nameservers:
+              - 192.168.1.1
+              - 192.168.8.8
+            dns-search: example.com
+            routes:
+              - { network: 172.12.0.0/17, gateway: 172.18.127.254 } 
+              - { network: 192.168.0.0/16, gateway: 172.18.127.254 }
+              - { network: 10.0.0.0/8, gateway: 172.18.127.254 }
 
 
 Default gateway is `172.18.127.1` and all RFC1915 are routed via
 `172.18.127.254`.
+
+### Example from `interfaces(5)` man page
+
+
+    interfaces_network_interfaces:
+      - file: /etc/network/interfaces
+        data:
+        - iface: eth0
+        - source: interfaces.d/machine-dependent
+        - source-directory: interfaces.d
+        - mapping: eth0
+          script: /usr/local/sbin/map-scheme
+          map:
+            - HOME eth0-home
+            - WORK eth0-work
+        - iface: eth0-home
+          address: 192.168.1.1
+          netmask: 255.255.255.0
+          up: flush-mail
+        - iface: eth0-work
+        - iface: eth1
+          type: allow-hotplug
+      # Other examples
+      - file: /etc/network/interfaces.d/extra
+        data:
+        - iface: lo
+        - iface: lo:1
+          address: 127.10.10.1
+          netmask: 255.255.255.255
+        - iface: eth2
+          method: manual
+          auto vmbr0
+        - iface: vmbr2
+          bridge_ports: eth2
+          bridge_stp: 'off'
+          bridge_fd: 0
+          routes:
+            - { network: 172.19.0.0/17, gateway: 172.18.127.254 }
+            - { network: 172.19.192.0/22 gateway: 172.18.127.1 }
 
 
 
