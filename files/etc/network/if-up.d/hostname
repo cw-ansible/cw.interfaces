@@ -1,0 +1,78 @@
+#!/bin/sh
+#
+# Copyright © 2015 Sébastien Gross <seb•ɑƬ•chezwam•ɖɵʈ•org>
+#
+# Created: 2015-05-01
+# Last changed: 2015-06-09 12:34:00
+#
+# This program is free software. It comes without any warranty, to
+# the extent permitted by applicable law. You can redistribute it
+# and/or modify it under the terms of the Do What The Fuck You Want
+# To Public License, Version 2, as published by Sam Hocevar. See
+# http://sam.zoy.org/wtfpl/COPYING for more details.
+#
+# Set server hostname from interface configuration. This is mainly useful
+# for a RAMdisk with no DHCP. This only work with static method.
+#
+# auto eth0
+# iface eth0 inet static
+#       hostname host1.example.com
+#
+# auto eth1
+# iface eth1 inet static
+#       hostname yes
+#
+#
+# If hostname is a FQDN, an extra line is added to /etc/hosts:
+#
+#  $IF_ADDRESS host1.example.com host1 localhost-$IFACE localhost-$IFACE.localdomain
+#
+# Otherwise, only the localhost-$IFACE aliases are created: 
+#
+#  $IF_ADDRESS localhost-$IFACE localhost-$IFACE.localdomain
+#
+# This allows you to use either localhost-$IFACE or
+# localhost-$IFACE.localdomain for specific purposes, for example if you
+# want to bind a service to a specific interface without knowing its IP
+# address.
+
+LOG="logger -t hostname '($IFACE)'"
+
+# If no hostname is set we don't want to go further
+if test -z "${IF_HOSTNAME}"; then
+    exit 0
+fi
+
+# Only static method can set hostname.
+if ! test $METHOD = "static"; then
+    exit 0
+fi
+
+
+hn_list=""
+
+localhost=$(echo "localhost-$IFACE" | sed 's/[^A-Za-z0-9]/-/g')
+
+if ! test "$IF_HOSTNAME" = "yes"; then
+    hostname=$(echo $IF_HOSTNAME | cut -d. -f 1)
+    domain=$(echo $IF_HOSTNAME | cut -d. -f 2-)
+    # if domain=hostname, hostname is not FQDN.
+    if ! test "$domain" = "$hostname" ; then
+	hn_list="$hn_list $IF_HOSTNAME $hostname"
+    else
+	hn_list="$hn_list $hostname"
+    fi
+    echo $hostname >/etc/hostname
+    /bin/hostname -F /etc/hostname
+    invoke-rc.d hostname restart >> /dev/null
+    $LOG "Set hostname to $IF_HOSTNAME"
+
+fi
+
+hn_list="$hn_list $localhost $localhost.localdomain"
+
+grep -v " $localhost $localhost.localdomain" /etc/hosts > /etc/hosts.tmp
+echo "$IF_ADDRESS $hn_list # interfaces" >> /etc/hosts.tmp
+mv /etc/hosts.tmp /etc/hosts
+$LOG "Add $localhost alias for $IF_ADDRESS"
+

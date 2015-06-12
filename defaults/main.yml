@@ -1,0 +1,74 @@
+---
+
+# List of interfaces files to generate
+#
+# Each file is defined by a dictionary of:
+#
+#  - "file": the name of the file to generate.
+#  - "data": a list of parts of the interfaces file to be generated.
+#
+# Each "data" item consists of:
+#
+#  - "iface": name of the interfaces. In addition of standard keywords, the
+#    "iface" data also understand:
+#    - "comment": A comment for that interface.
+#    - "hostname": The hostname to be set when the interface if configured
+#      (work only for static method).
+#      If the "hostname" is a host name, /etc/hostname will be set to its
+#      value, an the extra line is added to /etc/hosts for convenience:
+#        ADDR host1.example.com host1 localhost-IFACE localhost-IFACE.localdomain
+#      If the hostname is "yes", only the followin extra line is added to
+#      /etc/hosts:
+#        ADDR localhost-IFACE localhost-IFACE.localdomain
+#    - "type": how the interface is configured. By default "auto", can be
+#      "allow-*". If interface is "lo" the type is set to "auto:.  See
+#      interfaces(5) for further details.
+#    - "method": how to configure the interface: loopback, static, dhcp or
+#      manual. By default the method is dhcp except if an "address" is
+#      provided. If interface is "lo" the method is set to loopback.
+#    - "family": inet by default, use inet6 for IPv6.
+#    - "routes": An alias to configure static routes when interface is bring
+#      UP. Each route is a dictionary with a "network" and a "gateway"
+#      parameter.
+#      Each route will generate a "post-up" line for the interface entry.
+#  - "mapping", "source", "source-directory": act like described in
+#    interface(5) manpage.
+#
+# The following example generates the interfaces file as given in the man
+# page:
+#
+# interfaces_network_interfaces:
+#   - file: /etc/network/interfaces
+#     data:
+#     - iface: eth0
+#     - source: interfaces.d/machine-dependent
+#     - source-directory: interfaces.d
+#     - mapping: eth0
+#       script: /usr/local/sbin/map-scheme
+#       map:
+#         - HOME eth0-home
+#         - WORK eth0-work
+#     - iface: eth0-home
+#       address: 192.168.1.1
+#       netmask: 255.255.255.0
+#       up: flush-mail
+#     - iface: eth0-work
+#     - iface: eth1
+#       type: allow-hotplug
+#   # Other examples
+#   - file: /etc/network/interfaces.d/extra
+#     data:
+#     - iface: lo
+#     - iface: lo:1
+#       address: 127.10.10.1
+#       netmask: 255.255.255.255
+#     - iface: eth2
+#       method: manual
+#       auto vmbr0
+#     - iface: vmbr2
+#       bridge_ports: eth2
+#       bridge_stp: 'off'
+#       bridge_fd: 0
+#       routes:
+#         - { network: 172.19.0.0/17, gateway: 172.18.127.254 }
+#         - { network: 172.19.192.0/22 gateway: 172.18.127.1 }
