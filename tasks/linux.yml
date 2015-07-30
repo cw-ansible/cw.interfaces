@@ -1,0 +1,19 @@
+---
+
+- name: copy hostname script
+  copy:
+    src: etc/network/if-up.d/hostname
+    dest: /etc/network/if-up.d/hostname
+    mode: '0755'
+    owner: root
+    group: root
+
+- name: create network interfaces file
+  template:
+    src: etc/network/interfaces
+    dest: '{{ item.file | default("/etc/network/interfaces") }}'
+    mode: '0644'
+    owner: root
+    group: root
+  with_items: interfaces_network_interfaces
+  when: interfaces_network_interfaces is defined

@@ -1,0 +1,8 @@
+# {{ ansible_managed }}
+
+{% if item.comment is defined %}
+## {{ item.comment }}
+{% endif %}
+{% for l in item.data %}
+{{ l }}
+{% endfor %}

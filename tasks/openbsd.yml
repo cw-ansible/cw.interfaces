@@ -1,0 +1,13 @@
+---
+
+
+- name: create network interfaces file
+  template:
+    src: etc/hostname.OpenBSD
+    dest: '{{ item.file }}'
+    mode: '{{ item.mode | default("0640") }}'
+    owner: root
+    group: wheel
+  with_items: interfaces_network_interfaces
+  when: interfaces_network_interfaces is defined
+  notify: netstart
